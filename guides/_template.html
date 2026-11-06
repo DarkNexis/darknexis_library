@@ -43,10 +43,10 @@
 <link rel="apple-touch-icon" href="../icons/icon-192.png">
 <link rel="manifest" href="../manifest.webmanifest">
 <link rel="stylesheet" href="../fonts/fonts.css">
-<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="../css/style.css?v=2">
 </head>
 <!-- data-guide="[имя-файла-без-.html]" — чтобы меню подсветило текущий гайд -->
-<body data-page="guide" data-guide="[имя-файла-без-.html]">
+<body data-page="guide" data-in-guides data-guide="[имя-файла-без-.html]">
 <div id="progress" aria-hidden="true"></div>
 <a class="skip" href="#main">К содержанию</a>
 
@@ -141,9 +141,10 @@
   </div>
 </section>
 
-<!-- Ссылки на соседние гайды. Уберите <span></span> и лишнюю <a>,
-     если гайдов станет больше двух — скопируйте <a class="next|prev"> из готовых страниц -->
-<nav class="art-nav" aria-label="Другие гайды">
+<!-- Ссылки на соседние гайды. Не трогайте их вручную: скрипт сам перестроит
+     блок из реестра (js/registry.js). Разметка ниже — запас на случай
+     выключенного JavaScript; поправьте её, только если хотите другой порядок. -->
+<nav class="art-nav" data-auto aria-label="Другие гайды">
   <a class="prev" href="stirka-bez-oshibok.html"><div class="dir">← Предыдущий гайд</div><div class="t">Стирка без ошибок</div></a>
   <a class="next" href="uhod-za-obuvyu.html"><div class="dir">Следующий гайд →</div><div class="t">Уход за обувью</div></a>
 </nav>
@@ -157,7 +158,7 @@
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5"/><path d="m5 12 7-7 7 7"/></svg>
 </button>
 
-<script src="../js/registry.js"></script>
-<script src="../js/app.js"></script>
+<script src="../js/registry.js?v=2"></script>
+<script src="../js/app.js?v=2"></script>
 </body>
 </html>

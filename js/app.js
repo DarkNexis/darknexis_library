@@ -7,7 +7,8 @@
 
    Функции: тёмная тема, меню гайдов из реестра, поиск, шторка,
    прогресс чтения, активный раздел, чек-листы, «поделиться»,
-   копирование ссылки на раздел, кнопка «наверх», горячие клавиши.
+   копирование ссылки на раздел, кнопка «наверх», горячие клавиши,
+   переходы «предыдущий/следующий гайд» и счётчики на главной.
    ============================================================ */
 (function () {
   'use strict';
@@ -20,8 +21,13 @@
     });
   }
 
-  /* страницы в папке guides/ помечены data-in-guides — считаем префиксы ссылок */
-  var IN_GUIDES = document.body.hasAttribute('data-in-guides');
+  /* страницы в папке guides/ помечены data-in-guides (или data-page="guide") —
+     от этого зависят префиксы ссылок в меню. Проверяем оба признака:
+     если хотя бы один сработал, значит мы внутри папки guides/.
+     Раньше здесь был только data-in-guides — из-за этого меню на страницах
+     гайдов вело на guides/guides/… и отдавало «Страницу не найдена». */
+  var IN_GUIDES = document.body.hasAttribute('data-in-guides') ||
+    document.body.getAttribute('data-page') === 'guide';
   var GUIDE_PREFIX = IN_GUIDES ? '' : 'guides/';
   var INDEX_HREF = IN_GUIDES ? '../index.html' : './';
 
@@ -76,6 +82,13 @@
     var q = (filter || '').trim().toLowerCase();
     var list = guides.filter(function (g) { return !q || haystack(g).indexOf(q) !== -1; });
     var html = '';
+    /* на странице гайда первым в меню идёт возврат в библиотеку */
+    if (IS_GUIDE && !q) {
+      html += '<a class="side-card side-home" href="' + INDEX_HREF + '" style="--ac:var(--olive,#66713d)">' +
+        '<span class="side-card-top"><span class="side-emoji" aria-hidden="true">🏠</span>' +
+        '<span class="side-card-t">Все гайды</span></span>' +
+        '<span class="side-card-meta" style="display:block">Главная страница библиотеки</span></a>';
+    }
     if (!list.length) {
       html += '<div class="side-empty">Ничего не нашлось.<br>Попробуйте другое слово — например, «кожа» или «гель».</div>';
     }
@@ -98,6 +111,41 @@
     if (m10 === 1 && m100 !== 11) return one;
     if (m10 >= 2 && m10 <= 4 && (m100 < 10 || m100 >= 20)) return few;
     return many;
+  }
+
+  /* ---------- «предыдущий / следующий гайд» в конце статьи ----------
+     Строится из реестра автоматически: добавили третий гайд —
+     переходы обновились на всех страницах без правки HTML. */
+  function renderArtNav() {
+    if (!IS_GUIDE) return;
+    var navs = $$('.art-nav[data-auto]');
+    if (!navs.length) return;
+    var guides = window.GUIDES || [];
+    var i = -1;
+    guides.forEach(function (g, k) { if (g.file === GUIDE_ID + '.html') i = k; });
+    if (i === -1) return;
+    var prev = i > 0 ? guides[i - 1] : null;
+    var next = i < guides.length - 1 ? guides[i + 1] : null;
+    var html = prev
+      ? '<a class="prev" href="' + GUIDE_PREFIX + prev.file + '"><div class="dir">← Предыдущий гайд</div><div class="t">' + esc(prev.title) + '</div></a>'
+      : '<span></span>';
+    html += next
+      ? '<a class="next" href="' + GUIDE_PREFIX + next.file + '"><div class="dir">Следующий гайд →</div><div class="t">' + esc(next.title) + '</div></a>'
+      : '<span></span>';
+    navs.forEach(function (n) { n.innerHTML = html; });
+  }
+
+  /* ---------- счётчики на главной — считаются из реестра ----------
+     Добавили гайд в реестр — числа в шапке обновились сами. */
+  function renderStats() {
+    if (IS_GUIDE) return;
+    var guides = window.GUIDES || [];
+    if (!guides.length) return;
+    var secs = guides.reduce(function (s, g) { return s + (parseInt(g.sections, 10) || 0); }, 0);
+    var gEl = $('[data-stat="guides"]');
+    var sEl = $('[data-stat="sections"]');
+    if (gEl) gEl.innerHTML = '<b>' + guides.length + '</b> ' + plural(guides.length, 'гайд', 'гайда', 'гайдов');
+    if (sEl) sEl.innerHTML = '<b>' + secs + '</b> ' + plural(secs, 'раздел', 'раздела', 'разделов');
   }
 
   /* ---------- поиск: меню + карточки на главной ---------- */
@@ -139,12 +187,14 @@
     if (d) d.classList.add('on');
     if (o) o.classList.add('on');
     if (b) b.setAttribute('aria-expanded', 'true');
+    document.body.classList.add('drawer-open'); /* фон под шторкой не скроллится */
   }
   function closeDrawer() {
     var d = $('#drawer'), o = $('#overlay'), b = $('#burger');
     if (d) d.classList.remove('on');
     if (o) o.classList.remove('on');
     if (b) b.setAttribute('aria-expanded', 'false');
+    document.body.classList.remove('drawer-open');
   }
 
   /* ---------- чек-листы ---------- */
@@ -294,6 +344,8 @@
     applyTheme(currentTheme());
 
     renderNav('');
+    renderArtNav();
+    renderStats();
     bindSearch();
 
     /* шторка */
