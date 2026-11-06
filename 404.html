@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Страница не найдена — Домашние гайды</title>
+<script>
+/* та же логика темы, что и в index.html — без вспышки светлым */
+try{
+  var t=localStorage.getItem('cg-theme');
+  if(t!=='dark'&&t!=='light'){t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}
+  document.documentElement.setAttribute('data-theme',t);
+}catch(e){}
+</script>
+<script>
+  /* GitHub Pages отдаёт 404 для несуществующих путей —
+     возвращаем посетителя в библиотеку, сохраняя хэш */
+  location.replace('./' + (location.hash || ''));
+</script>
+<meta http-equiv="refresh" content="1; url=./">
+</head>
+<body style="font-family:Arial,sans-serif;max-width:560px;margin:60px auto;padding:0 20px;color:#2b2520">
+  <h1>Такой страницы нет</h1>
+  <p>Перенаправляем в <a href="./">библиотеку гайдов</a>…</p>
+</body>
+</html>

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Проверка сайта — Домашние гайды</title>
+<meta name="robots" content="noindex">
+<style>
+  :root{--bg:#f2ecdf;--card:#fffdf7;--tx:#2b2520;--mut:#7a6f63;--ok:#3d7a3f;--bad:#a33131;--ac:#8a3134}
+  @media (prefers-color-scheme: dark){:root{--bg:#181310;--card:#211b17;--tx:#ece4d8;--mut:#a3937f;--ok:#7fbf72;--bad:#e08585}}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.6 -apple-system,'Segoe UI',Roboto,Arial,sans-serif;padding:32px 16px}
+  .wrap{max-width:640px;margin:0 auto}
+  h1{font-size:26px;margin:0 0 6px}
+  .sub{color:var(--mut);margin:0 0 22px}
+  .url{font-size:13px;color:var(--mut);background:var(--card);border:1px solid rgba(128,110,90,.25);border-radius:10px;padding:8px 12px;word-break:break-all;margin-bottom:18px}
+  .row{display:flex;gap:10px;align-items:flex-start;background:var(--card);border:1px solid rgba(128,110,90,.25);border-radius:10px;padding:10px 14px;margin-bottom:8px}
+  .st{flex:0 0 auto;font-weight:700;width:22px;text-align:center}
+  .ok .st{color:var(--ok)} .bad .st{color:var(--bad)}
+  .f{font-family:ui-monospace,Consolas,monospace;font-size:13.5px;word-break:break-all}
+  .hint{color:var(--mut);font-size:13.5px}
+  .verdict{border-radius:12px;padding:14px 16px;margin:20px 0;font-weight:600}
+  .verdict.all-ok{background:rgba(61,122,63,.12);color:var(--ok)}
+  .verdict.problems{background:rgba(163,49,49,.12);color:var(--bad)}
+  a{color:var(--ac)}
+  .btn{display:inline-block;margin-top:14px;background:var(--ac);color:#fff;text-decoration:none;padding:10px 18px;border-radius:10px;font-weight:600}
+  details{margin-top:18px;color:var(--mut);font-size:14px}
+  summary{cursor:pointer;color:var(--tx);font-weight:600}
+  ol li{margin-bottom:8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Проверка сайта</h1>
+  <p class="sub">Страница проверяет, что все файлы библиотеки лежат там, где нужно. Откройте её по адресу вашего GitHub Pages — она сама всё покажет.</p>
+  <div class="url" id="loc"></div>
+  <div id="list"></div>
+  <div class="verdict" id="verdict" hidden></div>
+  <a class="btn" href="./">← Открыть библиотеку</a>
+  <details>
+    <summary>Что делать, если есть красные строки</summary>
+    <ol>
+      <li>Красная строка = файла нет по этому пути на сервере. Обычно причина одна: <b>в репозиторий загрузились не все файлы</b> (например, папки <b>css</b>, <b>js</b>, <b>fonts</b>, <b>guides</b>, <b>pdf</b>, <b>icons</b> остались внутри вложенной папки, а не в корне репозитория).</li>
+      <li>GitHub <b>не распаковывает архивы</b> — zip нужно сначала распаковать у себя, а затем загрузить его содержимое.</li>
+      <li>Проверьте: в корне репозитория должен лежать <b>index.html</b>, а рядом с ним — перечисленные папки. Уровень вложенности «репозиторий → папка → файлы» не нужен.</li>
+      <li>После исправления подождите 1–2 минуты и обновите страницу с очисткой кэша (Ctrl+Shift+R / в меню браузера «Обновить без кэша»).</li>
+      <li>Убедитесь, что открываете сайт по адресу Pages (<i>имя-пользователя.github.io/имя-репозитория/</i>), а не файл на сайте github.com.</li>
+    </ol>
+  </details>
+</div>
+<script>
+(function () {
+  var loc = document.getElementById('loc');
+  loc.textContent = 'Адрес: ' + location.href;
+  var files = [
+    'index.html',
+    'css/style.css',
+    'js/app.js',
+    'js/registry.js',
+    'fonts/fonts.css',
+    'fonts/inter-400-cyrillic.woff2',
+    'favicon.svg',
+    'guides/stirka-bez-oshibok.html',
+    'guides/uhod-za-obuvyu.html',
+    'pdf/gid-po-stirke-a4.pdf',
+    'pdf/uhod-za-obuvyu.pdf'
+  ];
+  var list = document.getElementById('list');
+  var verdict = document.getElementById('verdict');
+  var done = 0, bad = [];
+
+  files.forEach(function (f) {
+    var row = document.createElement('div');
+    row.className = 'row';
+    row.innerHTML = '<span class="st">…</span><span><span class="f">' + f + '</span><div class="hint">проверяется</div></span>';
+    list.appendChild(row);
+    fetch(f + '?check=' + Date.now(), { method: 'GET' })
+      .then(function (r) { return r.ok ? 'ok' : 'bad'; })
+      .catch(function () { return 'net'; })
+      .then(function (st) {
+        done++;
+        var ok = st === 'ok';
+        if (!ok) bad.push(f);
+        row.className = 'row ' + (ok ? 'ok' : 'bad');
+        row.innerHTML = '<span class="st">' + (ok ? '✓' : '✕') + '</span><span><span class="f">' + f + '</span><div class="hint">' +
+          (ok ? 'на месте' : (st === 'net' ? 'нет ответа — откройте эту страницу по https-адресу GitHub Pages, а не с диска' : 'файл не найден на сервере')) + '</div></span>';
+        if (done === files.length) {
+          verdict.hidden = false;
+          if (!bad.length) {
+            verdict.className = 'verdict all-ok';
+            verdict.textContent = 'Всё на месте! Если сама библиотека всё равно выглядит сломанной — обновите страницу без кэша (Ctrl+Shift+R).';
+          } else {
+            verdict.className = 'verdict problems';
+            verdict.textContent = 'Проблемы: ' + bad.length + ' файл(ов) не найдено. См. подсказки ниже — почти всегда это неполная загрузка файлов в репозиторий.';
+          }
+        }
+      });
+  });
+})();
+</script>
+</body>
+</html>
